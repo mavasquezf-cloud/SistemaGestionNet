@@ -5,4 +5,10 @@
     <Project Path="src/SistemaGestion.Domain/SistemaGestion.Domain.csproj" />
     <Project Path="src/SistemaGestion.Infrastructure/SistemaGestion.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SistemaGestion.API.IntegrationTests/SistemaGestion.API.IntegrationTests.csproj" />
+    <Project Path="tests/SistemaGestion.Application.UnitTests/SistemaGestion.Application.UnitTests.csproj" />
+    <Project Path="tests/SistemaGestion.Domain.UnitTests/SistemaGestion.Domain.UnitTests.csproj" />
+    <Project Path="tests/SistemaGestion.Infrastructure.IntegrationTests/SistemaGestion.Infrastructure.IntegrationTests.csproj" />
+  </Folder>
 </Solution>

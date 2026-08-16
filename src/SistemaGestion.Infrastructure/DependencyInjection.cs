@@ -2,8 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaGestion.Application.Catalog.Persistence;
+using SistemaGestion.Application.Common.Time;
+using SistemaGestion.Application.Inventory.Persistence;
 using SistemaGestion.Infrastructure.Persistence;
 using SistemaGestion.Infrastructure.Persistence.Repositories;
+using SistemaGestion.Infrastructure.Time;
 
 namespace SistemaGestion.Infrastructure;
 
@@ -21,8 +24,11 @@ public static class DependencyInjection
             options.UseSqlServer(connectionString));
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IInventoryItemRepository, InventoryItemRepository>();
+        services.AddScoped<IInventoryMovementRepository, InventoryMovementRepository>();
         services.AddScoped<IUnitOfWork>(provider =>
             provider.GetRequiredService<SistemaGestionDbContext>());
+        services.AddSingleton<IClock, SystemClock>();
 
         return services;
     }

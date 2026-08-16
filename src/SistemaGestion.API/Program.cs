@@ -5,6 +5,9 @@ using SistemaGestion.Application.Catalog.Categories.GetCategories;
 using SistemaGestion.Application.Catalog.Products.CreateProduct;
 using SistemaGestion.Application.Catalog.Products.GetProductById;
 using SistemaGestion.Application.Catalog.Products.GetProducts;
+using SistemaGestion.Application.Inventory.AdjustInventory;
+using SistemaGestion.Application.Inventory.GetInventoryByProductId;
+using SistemaGestion.Application.Inventory.GetInventoryMovements;
 using SistemaGestion.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +21,9 @@ builder.Services.AddScoped<GetCategoriesUseCase>();
 builder.Services.AddScoped<CreateProductUseCase>();
 builder.Services.AddScoped<GetProductsUseCase>();
 builder.Services.AddScoped<GetProductByIdUseCase>();
+builder.Services.AddScoped<AdjustInventoryUseCase>();
+builder.Services.AddScoped<GetInventoryByProductIdUseCase>();
+builder.Services.AddScoped<GetInventoryMovementsUseCase>();
 
 var app = builder.Build();
 
@@ -30,6 +36,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapCategoryEndpoints();
 app.MapProductEndpoints();
+app.MapInventoryEndpoints();
 
 app.Run();
 

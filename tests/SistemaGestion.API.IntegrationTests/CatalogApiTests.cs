@@ -4,8 +4,9 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using SistemaGestion.API.Contracts;
 using SistemaGestion.Infrastructure.Persistence;
 
@@ -131,18 +132,22 @@ public sealed class CatalogApiFactory : WebApplicationFactory<Program>, IAsyncLi
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.ConfigureAppConfiguration((_, configuration) =>
+        builder.ConfigureServices(services =>
         {
-            configuration.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:SistemaGestionDb"] = $"{ServerConnection}Database={databaseName};"
-            });
+            services.RemoveAll<IDbContextOptionsConfiguration<SistemaGestionDbContext>>();
+            services.RemoveAll<DbContextOptions<SistemaGestionDbContext>>();
+            services.RemoveAll<SistemaGestionDbContext>();
+            services.AddDbContext<SistemaGestionDbContext>(options =>
+                options.UseSqlServer($"{ServerConnection}Database={databaseName};"));
         });
     }
 
     public async Task InitializeAsync()
     {
-        Client = CreateClient();
+        Client = CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost")
+        });
         await using var scope = Services.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<SistemaGestionDbContext>();
         await context.Database.MigrateAsync();

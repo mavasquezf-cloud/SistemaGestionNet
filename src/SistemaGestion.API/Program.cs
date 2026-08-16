@@ -1,41 +1,36 @@
+using Scalar.AspNetCore;
+using SistemaGestion.API.Endpoints;
+using SistemaGestion.Application.Catalog.Categories.CreateCategory;
+using SistemaGestion.Application.Catalog.Categories.GetCategories;
+using SistemaGestion.Application.Catalog.Products.CreateProduct;
+using SistemaGestion.Application.Catalog.Products.GetProductById;
+using SistemaGestion.Application.Catalog.Products.GetProducts;
+using SistemaGestion.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddValidation();
+builder.Services.AddProblemDetails();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddScoped<CreateCategoryUseCase>();
+builder.Services.AddScoped<GetCategoriesUseCase>();
+builder.Services.AddScoped<CreateProductUseCase>();
+builder.Services.AddScoped<GetProductsUseCase>();
+builder.Services.AddScoped<GetProductByIdUseCase>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapCategoryEndpoints();
+app.MapProductEndpoints();
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+public partial class Program;

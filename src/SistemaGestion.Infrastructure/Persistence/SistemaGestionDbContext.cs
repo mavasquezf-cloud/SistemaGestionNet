@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using SistemaGestion.Application.Catalog.Persistence;
 using SistemaGestion.Application.Inventory.Persistence;
+using SistemaGestion.Application.Suppliers.Persistence;
 using SistemaGestion.Domain.Catalog.Categories;
 using SistemaGestion.Domain.Catalog.Products;
 using SistemaGestion.Domain.Inventory;
+using SistemaGestion.Domain.Suppliers;
 
 namespace SistemaGestion.Infrastructure.Persistence;
 
@@ -19,6 +21,8 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
 
     public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
 
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+
     public override async Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default)
     {
@@ -32,10 +36,21 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
             throw new InventoryConcurrencyException(
                 "Inventory was changed by another operation.", exception);
         }
+        catch (DbUpdateConcurrencyException exception) when (
+            exception.Entries.Any(entry => entry.Entity is Supplier))
+        {
+            throw new SupplierConcurrencyException(
+                "Supplier was changed by another operation.", exception);
+        }
         catch (DbUpdateException exception) when (IsInventoryItemCreationRace(exception))
         {
             throw new InventoryConcurrencyException(
                 "Inventory was created by another operation.", exception);
+        }
+        catch (DbUpdateException exception) when (IsDuplicateSupplierNumber(exception))
+        {
+            throw new SupplierDuplicateNumberException(
+                "A Supplier with the same SupplierNumber already exists.", exception);
         }
     }
 
@@ -49,5 +64,12 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
         return exception.InnerException is SqlException { Number: 2601 or 2627 } sqlException
             && sqlException.Message.Contains(
                 "IX_InventoryItems_ProductId", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsDuplicateSupplierNumber(DbUpdateException exception)
+    {
+        return exception.InnerException is SqlException { Number: 2601 or 2627 } sqlException
+            && sqlException.Message.Contains(
+                "UX_Suppliers_SupplierNumber", StringComparison.OrdinalIgnoreCase);
     }
 }

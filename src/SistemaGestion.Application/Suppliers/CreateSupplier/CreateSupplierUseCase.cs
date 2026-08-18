@@ -35,7 +35,15 @@ public sealed class CreateSupplierUseCase(
             command.Address);
 
         await supplierRepository.AddAsync(supplier, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (SupplierDuplicateNumberException)
+        {
+            return new CreateSupplierResult(
+                CreateSupplierOutcome.DuplicateSupplierNumber, null);
+        }
 
         return new CreateSupplierResult(
             CreateSupplierOutcome.Success,

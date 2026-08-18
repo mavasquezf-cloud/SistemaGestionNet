@@ -8,6 +8,7 @@ public sealed class InventoryMovement
         Guid productId,
         decimal quantityDelta,
         decimal resultingBalance,
+        MovementSource source,
         string reason,
         string? reference,
         DateTimeOffset occurredAt)
@@ -20,7 +21,7 @@ public sealed class InventoryMovement
         Type = quantityDelta > 0
             ? InventoryMovementType.Increase
             : InventoryMovementType.Decrease;
-        Source = MovementSource.ManualAdjustment;
+        Source = source;
         Reference = reference;
         Reason = reason;
         OccurredAt = occurredAt;

@@ -152,6 +152,86 @@ public sealed class InventoryItemTests
     }
 
     [Fact]
+    public void ApplyPurchaseReceipt_WithPositiveQuantity_IncreasesStockAndCreatesPurchaseMovement()
+    {
+        var item = CreateItem();
+        item.ApplyManualAdjustment(Guid.NewGuid(), 2m, "Initial count", null, DateTimeOffset.UtcNow);
+        var occurredAt = new DateTimeOffset(2026, 8, 18, 14, 0, 0, TimeSpan.Zero);
+
+        var movement = item.ApplyPurchaseReceipt(
+            Guid.NewGuid(), 5.5m, "  PUR-001  ", "  Goods received  ", occurredAt);
+
+        Assert.Equal(7.5m, item.QuantityOnHand);
+        Assert.Equal(5.5m, movement.QuantityDelta);
+        Assert.Equal(7.5m, movement.ResultingBalance);
+        Assert.Equal(InventoryMovementType.Increase, movement.Type);
+        Assert.Equal(MovementSource.PurchaseReceipt, movement.Source);
+        Assert.Equal("PUR-001", movement.Reference);
+        Assert.Equal("Goods received", movement.Reason);
+        Assert.Equal(occurredAt, movement.OccurredAt);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void ApplyPurchaseReceipt_WithNonPositiveQuantity_ThrowsArgumentOutOfRangeException(decimal quantity)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => CreateItem().ApplyPurchaseReceipt(
+            Guid.NewGuid(), quantity, "PUR-001", "Receipt", DateTimeOffset.UtcNow));
+    }
+
+    [Fact]
+    public void ApplyPurchaseReceipt_WithEmptyMovementId_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => CreateItem().ApplyPurchaseReceipt(
+            Guid.Empty, 1m, "PUR-001", "Receipt", DateTimeOffset.UtcNow));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void ApplyPurchaseReceipt_WithMissingReference_ThrowsArgumentException(string? reference)
+    {
+        Assert.Throws<ArgumentException>(() => CreateItem().ApplyPurchaseReceipt(
+            Guid.NewGuid(), 1m, reference!, "Receipt", DateTimeOffset.UtcNow));
+    }
+
+    [Fact]
+    public void ApplyPurchaseReceipt_WithReferenceOverMaximum_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => CreateItem().ApplyPurchaseReceipt(
+            Guid.NewGuid(), 1m, new string('R', InventoryItem.MaximumReferenceLength + 1),
+            "Receipt", DateTimeOffset.UtcNow));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void ApplyPurchaseReceipt_WithMissingReason_ThrowsArgumentException(string? reason)
+    {
+        Assert.Throws<ArgumentException>(() => CreateItem().ApplyPurchaseReceipt(
+            Guid.NewGuid(), 1m, "PUR-001", reason!, DateTimeOffset.UtcNow));
+    }
+
+    [Fact]
+    public void ApplyPurchaseReceipt_WithReasonOverMaximum_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => CreateItem().ApplyPurchaseReceipt(
+            Guid.NewGuid(), 1m, "PUR-001", new string('R', InventoryItem.MaximumReasonLength + 1),
+            DateTimeOffset.UtcNow));
+    }
+
+    [Fact]
+    public void ApplyManualAdjustment_AfterExtension_RemainsManualAdjustment()
+    {
+        var movement = Adjust(CreateItem(), 1m);
+
+        Assert.Equal(MovementSource.ManualAdjustment, movement.Source);
+    }
+
+    [Fact]
     public void QuantityOnHand_HasNoPublicSetter()
     {
         var property = typeof(InventoryItem).GetProperty(nameof(InventoryItem.QuantityOnHand));

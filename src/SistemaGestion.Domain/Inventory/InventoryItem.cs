@@ -82,6 +82,64 @@ public sealed class InventoryItem
             ProductId,
             quantityDelta,
             resultingBalance,
+            MovementSource.ManualAdjustment,
+            normalizedReason,
+            normalizedReference,
+            occurredAt);
+    }
+
+    public InventoryMovement ApplyPurchaseReceipt(
+        Guid movementId,
+        decimal quantity,
+        string purchaseReference,
+        string reason,
+        DateTimeOffset occurredAt)
+    {
+        if (movementId == Guid.Empty)
+        {
+            throw new ArgumentException("Inventory movement ID cannot be empty.", nameof(movementId));
+        }
+
+        if (quantity <= 0m)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(quantity), quantity, "Purchase receipt quantity must be greater than zero.");
+        }
+
+        if (string.IsNullOrWhiteSpace(purchaseReference))
+        {
+            throw new ArgumentException("Purchase reference is required.", nameof(purchaseReference));
+        }
+
+        var normalizedReference = purchaseReference.Trim();
+        if (normalizedReference.Length > MaximumReferenceLength)
+        {
+            throw new ArgumentException(
+                $"Purchase reference cannot exceed {MaximumReferenceLength} characters.", nameof(purchaseReference));
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new ArgumentException("Purchase receipt reason is required.", nameof(reason));
+        }
+
+        var normalizedReason = reason.Trim();
+        if (normalizedReason.Length > MaximumReasonLength)
+        {
+            throw new ArgumentException(
+                $"Purchase receipt reason cannot exceed {MaximumReasonLength} characters.", nameof(reason));
+        }
+
+        var resultingBalance = QuantityOnHand + quantity;
+        QuantityOnHand = resultingBalance;
+
+        return new InventoryMovement(
+            movementId,
+            Id,
+            ProductId,
+            quantity,
+            resultingBalance,
+            MovementSource.PurchaseReceipt,
             normalizedReason,
             normalizedReference,
             occurredAt);

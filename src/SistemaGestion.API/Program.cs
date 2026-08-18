@@ -8,6 +8,10 @@ using SistemaGestion.Application.Catalog.Products.GetProducts;
 using SistemaGestion.Application.Inventory.AdjustInventory;
 using SistemaGestion.Application.Inventory.GetInventoryByProductId;
 using SistemaGestion.Application.Inventory.GetInventoryMovements;
+using SistemaGestion.Application.Suppliers.ChangeSupplierStatus;
+using SistemaGestion.Application.Suppliers.CreateSupplier;
+using SistemaGestion.Application.Suppliers.GetSupplierById;
+using SistemaGestion.Application.Suppliers.GetSuppliers;
 using SistemaGestion.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +28,10 @@ builder.Services.AddScoped<GetProductByIdUseCase>();
 builder.Services.AddScoped<AdjustInventoryUseCase>();
 builder.Services.AddScoped<GetInventoryByProductIdUseCase>();
 builder.Services.AddScoped<GetInventoryMovementsUseCase>();
+builder.Services.AddScoped<CreateSupplierUseCase>();
+builder.Services.AddScoped<GetSupplierByIdUseCase>();
+builder.Services.AddScoped<GetSuppliersUseCase>();
+builder.Services.AddScoped<ChangeSupplierStatusUseCase>();
 
 var app = builder.Build();
 
@@ -37,6 +45,7 @@ app.UseHttpsRedirection();
 app.MapCategoryEndpoints();
 app.MapProductEndpoints();
 app.MapInventoryEndpoints();
+app.MapSupplierEndpoints();
 
 app.Run();
 

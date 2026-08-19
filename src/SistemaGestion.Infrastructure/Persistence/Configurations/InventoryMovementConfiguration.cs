@@ -68,5 +68,10 @@ internal sealed class InventoryMovementConfiguration : IEntityTypeConfiguration<
 
         builder.HasIndex(movement => new { movement.ProductId, movement.OccurredAt })
             .HasDatabaseName("IX_InventoryMovements_ProductId_OccurredAt");
+
+        builder.HasIndex(movement => new { movement.Source, movement.Reference, movement.ProductId })
+            .IsUnique()
+            .HasFilter("[Source] = 'PurchaseReceipt'")
+            .HasDatabaseName("UX_InventoryMovements_PurchaseReceipt_Product");
     }
 }

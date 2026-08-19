@@ -3,10 +3,12 @@ using Microsoft.Data.SqlClient;
 using SistemaGestion.Application.Catalog.Persistence;
 using SistemaGestion.Application.Inventory.Persistence;
 using SistemaGestion.Application.Suppliers.Persistence;
+using SistemaGestion.Application.Purchasing.Persistence;
 using SistemaGestion.Domain.Catalog.Categories;
 using SistemaGestion.Domain.Catalog.Products;
 using SistemaGestion.Domain.Inventory;
 using SistemaGestion.Domain.Suppliers;
+using SistemaGestion.Domain.Purchasing;
 
 namespace SistemaGestion.Infrastructure.Persistence;
 
@@ -22,6 +24,8 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
     public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
 
     public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<Purchase> Purchases => Set<Purchase>();
+    public DbSet<PurchaseLine> PurchaseLines => Set<PurchaseLine>();
 
     public override async Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default)
@@ -29,6 +33,12 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
         try
         {
             return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception) when (
+            exception.Entries.Any(entry => entry.Entity is Purchase))
+        {
+            throw new PurchaseConcurrencyException(
+                "Purchase was changed by another operation.", exception);
         }
         catch (DbUpdateConcurrencyException exception) when (
             exception.Entries.Any(entry => entry.Entity is InventoryItem))
@@ -52,10 +62,23 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
             throw new SupplierDuplicateNumberException(
                 "A Supplier with the same SupplierNumber already exists.", exception);
         }
+        catch (DbUpdateException exception) when (IsDuplicatePurchaseNumber(exception))
+        {
+            throw new PurchaseDuplicateNumberException(
+                "A Purchase with the same PurchaseNumber already exists.", exception);
+        }
+        catch (DbUpdateException exception) when (IsDuplicatePurchaseReceipt(exception))
+        {
+            throw new PurchaseReceiptConflictException(
+                "This Purchase receipt was already applied for the Product.", exception);
+        }
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasSequence<long>("PurchaseNumberSequence")
+            .StartsAt(1)
+            .IncrementsBy(1);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(SistemaGestionDbContext).Assembly);
     }
 
@@ -72,4 +95,14 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
             && sqlException.Message.Contains(
                 "UX_Suppliers_SupplierNumber", StringComparison.OrdinalIgnoreCase);
     }
+
+    private static bool IsDuplicatePurchaseNumber(DbUpdateException exception) =>
+        HasUniqueIndex(exception, "UX_Purchases_PurchaseNumber");
+
+    private static bool IsDuplicatePurchaseReceipt(DbUpdateException exception) =>
+        HasUniqueIndex(exception, "UX_InventoryMovements_PurchaseReceipt_Product");
+
+    private static bool HasUniqueIndex(DbUpdateException exception, string indexName) =>
+        exception.InnerException is SqlException { Number: 2601 or 2627 } sqlException
+        && sqlException.Message.Contains(indexName, StringComparison.OrdinalIgnoreCase);
 }

@@ -6,6 +6,7 @@ public sealed class Purchase
     public const int MaximumSupplierDocumentReferenceLength = 100;
 
     private readonly List<PurchaseLine> _lines = [];
+    private decimal _total;
 
     public Purchase(
         Guid id,
@@ -47,7 +48,7 @@ public sealed class Purchase
     public DateTimeOffset UpdatedAt { get; private set; }
     public DateTimeOffset? ReceivedAt { get; private set; }
     public IReadOnlyCollection<PurchaseLine> Lines => _lines.AsReadOnly();
-    public decimal Total => _lines.Sum(line => line.LineTotal);
+    public decimal Total => _total;
 
     public PurchaseLine AddLine(
         Guid lineId,
@@ -69,6 +70,7 @@ public sealed class Purchase
             lineId, Id, productId, productName, unitOfMeasure, quantity, unitCost);
 
         _lines.Add(line);
+        _total += line.LineTotal;
         UpdatedAt = occurredAt;
         return line;
     }

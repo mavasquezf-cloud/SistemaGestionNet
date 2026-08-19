@@ -2,6 +2,8 @@ namespace SistemaGestion.Domain.Purchasing;
 
 public sealed class PurchaseLine
 {
+    private readonly decimal _lineTotal;
+
     public const int MaximumProductNameLength = 200;
     public const int MaximumUnitOfMeasureLength = 50;
 
@@ -70,7 +72,7 @@ public sealed class PurchaseLine
         UnitOfMeasure = normalizedUnitOfMeasure;
         Quantity = quantity;
         UnitCost = unitCost;
-        LineTotal = decimal.Round(quantity * unitCost, 4, MidpointRounding.AwayFromZero);
+        _lineTotal = decimal.Round(quantity * unitCost, 4, MidpointRounding.AwayFromZero);
     }
 
     public Guid Id { get; }
@@ -80,5 +82,5 @@ public sealed class PurchaseLine
     public string UnitOfMeasure { get; }
     public decimal Quantity { get; }
     public decimal UnitCost { get; }
-    public decimal LineTotal { get; }
+    public decimal LineTotal => _lineTotal;
 }

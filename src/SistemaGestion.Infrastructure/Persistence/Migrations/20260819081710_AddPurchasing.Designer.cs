@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaGestion.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using SistemaGestion.Infrastructure.Persistence;
 namespace SistemaGestion.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SistemaGestionDbContext))]
-    partial class SistemaGestionDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260819081710_AddPurchasing")]
+    partial class AddPurchasing
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

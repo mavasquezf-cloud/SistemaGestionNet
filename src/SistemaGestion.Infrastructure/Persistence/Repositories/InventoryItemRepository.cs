@@ -21,4 +21,19 @@ internal sealed class InventoryItemRepository(SistemaGestionDbContext dbContext)
     {
         await dbContext.InventoryItems.AddAsync(inventoryItem, cancellationToken);
     }
+
+    public async Task<IReadOnlyDictionary<Guid, InventoryItem>> GetByProductIdsAsync(
+        IReadOnlyCollection<Guid> productIds,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(productIds);
+        if (productIds.Count == 0)
+        {
+            return new Dictionary<Guid, InventoryItem>();
+        }
+
+        return await dbContext.InventoryItems
+            .Where(item => productIds.Contains(item.ProductId))
+            .ToDictionaryAsync(item => item.ProductId, cancellationToken);
+    }
 }

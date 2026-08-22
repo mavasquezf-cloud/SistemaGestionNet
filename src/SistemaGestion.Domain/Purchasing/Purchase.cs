@@ -47,6 +47,7 @@ public sealed class Purchase
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public DateTimeOffset? ReceivedAt { get; private set; }
+    private byte[] RowVersion { get; set; } = [];
     public IReadOnlyCollection<PurchaseLine> Lines => _lines.AsReadOnly();
     public decimal Total => _total;
 

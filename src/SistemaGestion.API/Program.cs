@@ -13,6 +13,13 @@ using SistemaGestion.Application.Suppliers.CreateSupplier;
 using SistemaGestion.Application.Suppliers.GetSupplierById;
 using SistemaGestion.Application.Suppliers.GetSuppliers;
 using SistemaGestion.Infrastructure;
+using SistemaGestion.Application.Purchasing.AddPurchaseLine;
+using SistemaGestion.Application.Purchasing.CancelPurchase;
+using SistemaGestion.Application.Purchasing.ConfirmPurchase;
+using SistemaGestion.Application.Purchasing.CreatePurchase;
+using SistemaGestion.Application.Purchasing.GetPurchaseById;
+using SistemaGestion.Application.Purchasing.GetPurchases;
+using SistemaGestion.Application.Purchasing.ReceivePurchase;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +39,13 @@ builder.Services.AddScoped<CreateSupplierUseCase>();
 builder.Services.AddScoped<GetSupplierByIdUseCase>();
 builder.Services.AddScoped<GetSuppliersUseCase>();
 builder.Services.AddScoped<ChangeSupplierStatusUseCase>();
+builder.Services.AddScoped<CreatePurchaseUseCase>();
+builder.Services.AddScoped<AddPurchaseLineUseCase>();
+builder.Services.AddScoped<ConfirmPurchaseUseCase>();
+builder.Services.AddScoped<CancelPurchaseUseCase>();
+builder.Services.AddScoped<ReceivePurchaseUseCase>();
+builder.Services.AddScoped<GetPurchaseByIdUseCase>();
+builder.Services.AddScoped<GetPurchasesUseCase>();
 
 var app = builder.Build();
 
@@ -46,6 +60,7 @@ app.MapCategoryEndpoints();
 app.MapProductEndpoints();
 app.MapInventoryEndpoints();
 app.MapSupplierEndpoints();
+app.MapPurchaseEndpoints();
 
 app.Run();
 

@@ -17,6 +17,66 @@ namespace SistemaGestion.Infrastructure.IntegrationTests;
 public sealed class PurchasingPersistenceTests(SqlServerFixture fixture) : IClassFixture<SqlServerFixture>
 {
     [Fact]
+    public async Task Adding_first_line_to_reloaded_purchase_updates_total_and_rowversion()
+    {
+        Guid purchaseId;
+        Guid productId;
+        byte[] originalRowVersion;
+
+        await using (var createScope = fixture.CreateScope())
+        {
+            var context = createScope.ServiceProvider.GetRequiredService<SistemaGestionDbContext>();
+            var repository = createScope.ServiceProvider.GetRequiredService<IPurchaseRepository>();
+            var (supplier, product) = await AddDependencies(context);
+            var purchase = new Purchase(
+                Guid.NewGuid(), new($"PUR-{Guid.NewGuid():N}"[..12]), supplier.Id,
+                supplier.Name, DateTimeOffset.UtcNow);
+            await repository.AddAsync(purchase);
+            await context.SaveChangesAsync();
+
+            purchaseId = purchase.Id;
+            productId = product.Id;
+            originalRowVersion = context.Entry(purchase).Property<byte[]>("RowVersion").CurrentValue!;
+            Assert.NotEmpty(originalRowVersion);
+        }
+
+        await using (var updateScope = fixture.CreateScope())
+        {
+            var context = updateScope.ServiceProvider.GetRequiredService<SistemaGestionDbContext>();
+            var repository = updateScope.ServiceProvider.GetRequiredService<IPurchaseRepository>();
+            var product = await context.Products.SingleAsync(item => item.Id == productId);
+            var purchase = await repository.GetByIdAsync(purchaseId);
+
+            Assert.NotNull(purchase);
+            var entry = context.Entry(purchase);
+            Assert.Equal(EntityState.Unchanged, entry.State);
+            Assert.Equal(originalRowVersion, entry.Property<byte[]>("RowVersion").OriginalValue);
+            Assert.Equal(originalRowVersion, entry.Property<byte[]>("RowVersion").CurrentValue);
+
+            purchase.AddLine(
+                Guid.NewGuid(), product.Id, product.Name, product.UnitOfMeasure,
+                2.1256m, 3.4567m, DateTimeOffset.UtcNow);
+
+            context.ChangeTracker.DetectChanges();
+            Assert.Equal(EntityState.Modified, entry.State);
+            Assert.Equal(EntityState.Added, context.Entry(purchase.Lines.Single()).State);
+
+            await context.SaveChangesAsync();
+            Assert.False(originalRowVersion.SequenceEqual(
+                entry.Property<byte[]>("RowVersion").CurrentValue!));
+        }
+
+        await using (var verifyScope = fixture.CreateScope())
+        {
+            var context = verifyScope.ServiceProvider.GetRequiredService<SistemaGestionDbContext>();
+            var persisted = await context.Purchases.Include(item => item.Lines)
+                .SingleAsync(item => item.Id == purchaseId);
+            Assert.Equal(7.3476m, persisted.Total);
+            Assert.Equal(7.3476m, Assert.Single(persisted.Lines).LineTotal);
+        }
+    }
+
+    [Fact]
     public async Task Purchase_round_trips_complete_aggregate_snapshots_decimals_and_totals()
     {
         await using var scope = fixture.CreateScope();

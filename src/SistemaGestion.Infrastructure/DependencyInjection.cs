@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaGestion.Application.Catalog.Persistence;
 using SistemaGestion.Application.Common.Time;
+using SistemaGestion.Application.Customers.Persistence;
 using SistemaGestion.Application.Inventory.Persistence;
 using SistemaGestion.Application.Suppliers.Persistence;
 using SistemaGestion.Application.Purchasing.Persistence;
@@ -29,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IInventoryItemRepository, InventoryItemRepository>();
         services.AddScoped<IInventoryMovementRepository, InventoryMovementRepository>();
         services.AddScoped<ISupplierRepository, SupplierRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IPurchaseRepository, PurchaseRepository>();
         services.AddScoped<IPurchaseNumberGenerator, PurchaseNumberGenerator>();
         services.AddScoped<IUnitOfWork>(provider =>

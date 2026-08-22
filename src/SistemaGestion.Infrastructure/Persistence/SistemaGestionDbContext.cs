@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using SistemaGestion.Application.Catalog.Persistence;
+using SistemaGestion.Application.Customers.Persistence;
 using SistemaGestion.Application.Inventory.Persistence;
 using SistemaGestion.Application.Suppliers.Persistence;
 using SistemaGestion.Application.Purchasing.Persistence;
 using SistemaGestion.Domain.Catalog.Categories;
 using SistemaGestion.Domain.Catalog.Products;
+using SistemaGestion.Domain.Customers;
 using SistemaGestion.Domain.Inventory;
 using SistemaGestion.Domain.Suppliers;
 using SistemaGestion.Domain.Purchasing;
@@ -24,6 +26,7 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
     public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
 
     public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Purchase> Purchases => Set<Purchase>();
     public DbSet<PurchaseLine> PurchaseLines => Set<PurchaseLine>();
 
@@ -47,6 +50,12 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
                 "Inventory was changed by another operation.", exception);
         }
         catch (DbUpdateConcurrencyException exception) when (
+            exception.Entries.Any(entry => entry.Entity is Customer))
+        {
+            throw new CustomerConcurrencyException(
+                "Customer was changed by another operation.", exception);
+        }
+        catch (DbUpdateConcurrencyException exception) when (
             exception.Entries.Any(entry => entry.Entity is Supplier))
         {
             throw new SupplierConcurrencyException(
@@ -61,6 +70,11 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
         {
             throw new SupplierDuplicateNumberException(
                 "A Supplier with the same SupplierNumber already exists.", exception);
+        }
+        catch (DbUpdateException exception) when (IsDuplicateCustomerNumber(exception))
+        {
+            throw new CustomerDuplicateNumberException(
+                "A Customer with the same CustomerNumber already exists.", exception);
         }
         catch (DbUpdateException exception) when (IsDuplicatePurchaseNumber(exception))
         {
@@ -95,6 +109,9 @@ public sealed class SistemaGestionDbContext(DbContextOptions<SistemaGestionDbCon
             && sqlException.Message.Contains(
                 "UX_Suppliers_SupplierNumber", StringComparison.OrdinalIgnoreCase);
     }
+
+    private static bool IsDuplicateCustomerNumber(DbUpdateException exception) =>
+        HasUniqueIndex(exception, "UX_Customers_CustomerNumber");
 
     private static bool IsDuplicatePurchaseNumber(DbUpdateException exception) =>
         HasUniqueIndex(exception, "UX_Purchases_PurchaseNumber");
